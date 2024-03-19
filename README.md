@@ -7,8 +7,8 @@ If forward allele 1 or forward allele 2 contains the character 'I'  the the valu
 
 Running the code:
 ``` from a terminal run the following command with required arguments
-python ped_filter_to_fasta.py -p "path to ped file" -s "path to snp file"
-examplw
+python ped_filter_to_fasta.py -p "path/to/ped/file" -s "path/to/snp/file"
+example
 python ped_filter_to_fasta.py -p '/home/waa2/PycharmProjects/ped_filter_to_fasta/test_report.txt' -s '/home/waa2/PycharmProjects/ped_filter_to_fasta/input_snps.txt'
 
 ```
