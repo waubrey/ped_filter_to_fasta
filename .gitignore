@@ -159,7 +159,5 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 /Hereford_Herdbook_Int_HHBI_NAA_BOVG100V1_20230210_FinalReport.txt
-/test_report.txt
-/input_snps.txt
 /41718004723_input_snps.fa
 /41718004731_input_snps.fa
