@@ -3,7 +3,7 @@ import argparse
 
 def filter_PED_SNPs(ped_file, snp_list_path):
     """
-    Function to filter a ped file based on a list of SNPs
+    Function to filter a ped file based on a list of SNPs in a file
     :param ped_file: path to tab separated ped file
     :param snp_list: path to a text file containing list of SNP names (1 SNP names per line)
     :return: a dictionary of sample IDs and their corresponding SNP values
