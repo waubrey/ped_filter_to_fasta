@@ -1,6 +1,44 @@
 import csv
 import argparse
 
+# def filter_PED_SNPs(ped_file, snp_list_path):
+#     """
+#     Function to filter a ped file based on a list of SNPs in a file
+#     :param ped_file: path to tab separated ped file
+#     :param snp_list: path to a text file containing list of SNP names (1 SNP names per line)
+#     :return: a dictionary of sample IDs and their corresponding SNP values
+#     """
+#     snp_dict = {}  # Initialize an empty dictionary to store the sample IDs and their corresponding SNP values
+#     # Read SNP list and remove duplicates
+#     with open(snp_list_path, 'r') as snp_file:
+#         snp_list = set(line.strip() for line in snp_file)
+#
+#     with open(ped_file, 'r', newline='') as input_ped:
+#         ped_file_reader = csv.reader(input_ped, delimiter='\t')
+#         for _ in range(9):  # skip the first 9 lines of the ped file
+#             next(ped_file_reader)
+#         for row in ped_file_reader:
+#             snp_name = row[0]
+#             if snp_name in snp_list:
+#                 forward_allele1 = row[2]
+#                 forward_allele2 = row[3]
+#                 sample_id = row[1]
+#                 if forward_allele1 == 'D' or forward_allele2 == 'D' or forward_allele1 == '-' or forward_allele2 == '-':
+#                     continue
+#                 if forward_allele1 == 'I' or forward_allele2 == 'I':
+#                     if sample_id in snp_dict:
+#                         snp_dict[sample_id] += 'N'
+#                     else:
+#                         snp_dict[sample_id] = 'N'
+#                 elif forward_allele1 == forward_allele2:
+#                     if sample_id in snp_dict:
+#                         snp_dict[sample_id] += forward_allele1
+#                     else:
+#                         snp_dict[sample_id] = forward_allele1
+#     # for sample_id, snp_value in snp_dict.items():
+#     #     print(sample_id, snp_value)
+#     return snp_dict
+
 def filter_PED_SNPs(ped_file, snp_list_path):
     """
     Function to filter a ped file based on a list of SNPs in a file
@@ -9,10 +47,10 @@ def filter_PED_SNPs(ped_file, snp_list_path):
     :return: a dictionary of sample IDs and their corresponding SNP values
     """
     snp_dict = {}  # Initialize an empty dictionary to store the sample IDs and their corresponding SNP values
+    excluded_snps = {}
     # Read SNP list and remove duplicates
     with open(snp_list_path, 'r') as snp_file:
         snp_list = set(line.strip() for line in snp_file)
-
     with open(ped_file, 'r', newline='') as input_ped:
         ped_file_reader = csv.reader(input_ped, delimiter='\t')
         for _ in range(9):  # skip the first 9 lines of the ped file
@@ -24,8 +62,11 @@ def filter_PED_SNPs(ped_file, snp_list_path):
                 forward_allele2 = row[3]
                 sample_id = row[1]
                 if forward_allele1 == 'D' or forward_allele2 == 'D' or forward_allele1 == '-' or forward_allele2 == '-':
-                    continue
-                if forward_allele1 == 'I' or forward_allele2 == 'I':
+                    if sample_id in excluded_snps:
+                       excluded_snps[sample_id].append((snp_name, (forward_allele1+forward_allele2)))
+                    else:
+                       excluded_snps[sample_id] = [(snp_name, (forward_allele1+forward_allele2))]
+                elif forward_allele1 == 'I' or forward_allele2 == 'I':
                     if sample_id in snp_dict:
                         snp_dict[sample_id] += 'N'
                     else:
@@ -35,9 +76,17 @@ def filter_PED_SNPs(ped_file, snp_list_path):
                         snp_dict[sample_id] += forward_allele1
                     else:
                         snp_dict[sample_id] = forward_allele1
-    # for sample_id, snp_value in snp_dict.items():
-    #     print(sample_id, snp_value)
-    return snp_dict
+                elif forward_allele1 != forward_allele2:
+                    if sample_id in excluded_snps:
+                        excluded_snps[sample_id].append((snp_name, (forward_allele1 + forward_allele2)))
+                    else:
+                        excluded_snps[sample_id] = [(snp_name, (forward_allele1 + forward_allele2))]
+
+    for sample_id, snp_value in snp_dict.items():
+        print(sample_id, snp_value)
+    for sample_id, snp_value in excluded_snps.items():
+        print(sample_id, snp_value)
+    return snp_dict, excluded_snps
 
 
 
@@ -57,9 +106,21 @@ def print_fasta(snp_dict, snp_file_path):
             # write the sequence in 60 characters per line
             for i in range(0, len(sequence), 60):
                 fasta_file.write(sequence[i:i+60] + '\n')
-
     return None
 
+def print_excluded_snps(excluded_snps, snp_file_path):
+    """
+    :param excluded_snps:
+    :param snp_file_path:
+    :return:
+    """
+    snp_filename, extension = snp_file_path.split('/')[-1].rsplit('.', 1)
+    for animal_id, snps in excluded_snps.items():
+        excluded_snps_filename = f"{animal_id}_{snp_filename}_excluded.txt"
+        with open(excluded_snps_filename, 'w') as exclude_file:
+            exclude_file.write("animal, (snp id, snp)\n")
+            exclude_file.write(f"{animal_id}, {snps}\n")
+    return None
 
 # arguments parsing and help
 parser = argparse.ArgumentParser(
@@ -71,8 +132,9 @@ ped_file_path = args.ped_file
 snp_file_path = args.snp_file
 
 def main():
-    print_fasta(filter_PED_SNPs(ped_file_path, snp_file_path), snp_file_path)
-
+    filtered_snps, excluded_snps = filter_PED_SNPs(ped_file_path, snp_file_path)
+    print_fasta(filtered_snps, snp_file_path)
+    print_excluded_snps(excluded_snps, snp_file_path)
 
 if __name__ == '__main__':
     main()
